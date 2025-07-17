@@ -165,6 +165,7 @@ export function Dashboard({ language, onLanguageChange }: DashboardProps) {
             <span className="text-xl font-bold">GYM COACHING ONLINE</span>
           </div>
           <div className="flex items-center space-x-4">
+            <LanguageToggle currentLanguage={language} onLanguageChange={onLanguageChange} />
             <Bell className="h-6 w-6" />
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
@@ -176,7 +177,32 @@ export function Dashboard({ language, onLanguageChange }: DashboardProps) {
         </div>
       </header>
 
-      <div className="p-6">
+      <div className="flex min-h-screen">
+        {/* Sidebar */}
+        <aside className="w-64 bg-white border-r border-gray-200">
+          <nav className="p-4">
+            <ul className="space-y-2">
+              {navigation.map((item) => (
+                <li key={item.id}>
+                  <button
+                    onClick={() => setSelectedSection(item.id)}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                      selectedSection === item.id
+                        ? 'bg-primary text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-6">
         <h1 className="text-2xl font-bold mb-6 text-primary border-b-2 border-primary pb-2 inline-block">
           Dashboard
         </h1>
@@ -346,24 +372,25 @@ export function Dashboard({ language, onLanguageChange }: DashboardProps) {
           </Button>
         </div>
 
-        {/* Tab Content */}
-        {selectedSection === 'schedule' && (
-          <div className="mt-8">
-            <ScheduleView language={language} />
-          </div>
-        )}
-        
-        {selectedSection === 'nutrition' && (
-          <div className="mt-8">
-            <NutritionView language={language} />
-          </div>
-        )}
-        
-        {selectedSection === 'progress' && (
-          <div className="mt-8">
-            <ProgressView language={language} />
-          </div>
-        )}
+          {/* Tab Content */}
+          {selectedSection === 'schedule' && (
+            <div className="mt-8">
+              <ScheduleView language={language} />
+            </div>
+          )}
+          
+          {selectedSection === 'nutrition' && (
+            <div className="mt-8">
+              <NutritionView language={language} />
+            </div>
+          )}
+          
+          {selectedSection === 'progress' && (
+            <div className="mt-8">
+              <ProgressView language={language} />
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );
