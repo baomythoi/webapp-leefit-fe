@@ -1,10 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { LanguageToggle, type Language } from "@/components/LanguageToggle";
 import { translations } from "@/translations";
+import { useAPI } from "@/hooks/useAPI";
+import { 
+  sessionsAPI, 
+  nutritionAPI, 
+  progressAPI, 
+  notificationsAPI,
+  accountAPI 
+} from "@/services/api";
 import { 
   Calendar, 
   MessageCircle, 
@@ -26,6 +34,15 @@ interface DashboardProps {
 export function Dashboard({ language, onLanguageChange }: DashboardProps) {
   const [selectedSection, setSelectedSection] = useState('dashboard');
   const t = translations[language];
+
+  // API hooks for real-time data
+  const { data: userProfile, loading: profileLoading, error: profileError } = useAPI(accountAPI.getUserProfile);
+  const { data: trainingSessions, loading: sessionsLoading, refetch: refetchSessions } = useAPI(sessionsAPI.getTrainingSessions);
+  const { data: todayMenus, loading: menusLoading } = useAPI(nutritionAPI.getMenus);
+  const { data: userProgress, loading: progressLoading } = useAPI(progressAPI.getUserProgress);
+  const { data: notifications, loading: notificationsLoading } = useAPI(() => 
+    notificationsAPI.getUserNotifications('current-user-id') // Replace with actual user ID
+  );
 
   const user = {
     name: language === 'vi' ? "Nguyễn Văn A" : "John Doe",
@@ -319,7 +336,19 @@ export function Dashboard({ language, onLanguageChange }: DashboardProps) {
           )}
 
           {/* Add other sections here when selected */}
-          {selectedSection !== 'dashboard' && (
+          {selectedSection === 'schedule' && (
+            <ScheduleView language={language} />
+          )}
+          
+          {selectedSection === 'nutrition' && (
+            <NutritionView language={language} />
+          )}
+          
+          {selectedSection === 'progress' && (
+            <ProgressView language={language} />
+          )}
+          
+          {!['dashboard', 'schedule', 'nutrition', 'progress'].includes(selectedSection) && (
             <div className="text-center py-12">
               <h2 className="text-2xl font-bold mb-4">
                 {navigation.find(n => n.id === selectedSection)?.label}

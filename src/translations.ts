@@ -88,6 +88,7 @@ export const translations = {
     addNewPhoto: "Thêm ảnh mới",
     
     signInWithGoogle: "Đăng nhập với Google",
+    newSession: "Buổi tập mới",
   },
   
   en: {
@@ -179,5 +180,6 @@ export const translations = {
     addNewPhoto: "Add New Photo",
     
     signInWithGoogle: "Sign in with Google",
+    newSession: "New Session",
   }
 };

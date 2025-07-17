@@ -135,21 +135,17 @@ export function Survey({ language, onComplete }: SurveyProps) {
 
   const handleSubmit = async () => {
     try {
-      // Send to webhook (replace with your actual webhook URL)
-      const webhookUrl = "https://your-webhook-url.com/survey";
+      const { surveyAPI } = await import('@/services/api');
       
-      await fetch(webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        mode: "no-cors",
-        body: JSON.stringify({
-          ...surveyData,
-          timestamp: new Date().toISOString(),
-          language,
-        }),
+      const { data, error } = await surveyAPI.submitSurvey({
+        ...surveyData,
+        timestamp: new Date().toISOString(),
+        language,
       });
+
+      if (error) {
+        throw new Error(error);
+      }
 
       toast({
         title: language === 'vi' ? "Thành công!" : "Success!",
