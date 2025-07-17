@@ -156,13 +156,19 @@ export function Survey({ language, onComplete }: SurveyProps) {
 
       onComplete(surveyData);
     } catch (error) {
+      console.error('Survey submission error:', error);
+      
+      // Show warning but still proceed to dashboard
       toast({
-        title: language === 'vi' ? "Lỗi" : "Error",
+        title: language === 'vi' ? "Cảnh báo" : "Warning",
         description: language === 'vi' 
-          ? "Có lỗi xảy ra. Vui lòng thử lại." 
-          : "An error occurred. Please try again.",
+          ? "Không thể kết nối server, nhưng bạn vẫn có thể tiếp tục sử dụng ứng dụng." 
+          : "Cannot connect to server, but you can still continue using the app.",
         variant: "destructive",
       });
+      
+      // Proceed to dashboard even if API fails
+      onComplete(surveyData);
     }
   };
 
