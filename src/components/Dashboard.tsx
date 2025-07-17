@@ -13,6 +13,9 @@ import {
   notificationsAPI,
   accountAPI 
 } from "@/services/api";
+import { ScheduleView } from "./schedule/ScheduleView";
+import { NutritionView } from "./nutrition/NutritionView";
+import { ProgressView } from "./progress/ProgressView";
 import { 
   Calendar, 
   MessageCircle, 
