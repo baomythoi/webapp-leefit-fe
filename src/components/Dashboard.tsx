@@ -26,7 +26,10 @@ import {
   Menu,
   ChartBar,
   Apple,
-  Dumbbell
+  Dumbbell,
+  Video,
+  TrendingUp,
+  Utensils
 } from "lucide-react";
 
 interface DashboardProps {
@@ -153,215 +156,214 @@ export function Dashboard({ language, onLanguageChange }: DashboardProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="px-4 py-4 flex items-center justify-between">
+      <header className="bg-primary text-white">
+        <div className="px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <img 
-              src="/lovable-uploads/8dba926f-60c5-47d1-86a7-e0a32a5839ad.png" 
-              alt="LEEFIT" 
-              className="h-8"
-            />
-            <span className="font-medium text-muted-foreground">
-              {t.gymCoachingOnline}
-            </span>
+            <Menu className="h-6 w-6" />
+            <span className="text-xl font-bold">GYM COACHING ONLINE</span>
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
+            <Bell className="h-6 w-6" />
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">A</span>
               </div>
               <span className="font-medium">{user.name}</span>
             </div>
-            <LanguageToggle 
-              currentLanguage={language} 
-              onLanguageChange={onLanguageChange} 
-            />
           </div>
         </div>
       </header>
 
-      <div className="flex">
-        {/* Sidebar Navigation */}
-        <aside className="w-64 bg-card border-r border-border min-h-[calc(100vh-73px)]">
-          <nav className="p-4">
-            <div className="space-y-2">
-              {navigation.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setSelectedSection(item.id)}
-                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md text-left transition-colors ${
-                    selectedSection === item.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-muted'
-                  }`}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </div>
-          </nav>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6">
-          {selectedSection === 'dashboard' && (
-            <div className="space-y-6">
-              <h1 className="text-3xl font-bold">{t.dashboard}</h1>
-              
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t.currentWeight}</p>
-                      <p className="text-2xl font-bold">{user.weight} kg</p>
-                      <p className="text-sm text-success">-5 kg</p>
-                    </div>
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <User className="h-6 w-6 text-primary" />
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t.bodyFat}</p>
-                      <p className="text-2xl font-bold">{user.bodyFat}%</p>
-                      <p className="text-sm text-success">-4%</p>
-                    </div>
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <ChartBar className="h-6 w-6 text-primary" />
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t.todaySteps}</p>
-                      <p className="text-2xl font-bold">{user.todaySteps.toLocaleString()}</p>
-                      <Progress value={(user.todaySteps / user.targetSteps) * 100} className="mt-2" />
-                    </div>
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <Dumbbell className="h-6 w-6 text-primary" />
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t.monthlyGoal}</p>
-                      <p className="text-2xl font-bold">{user.monthlyGoal}%</p>
-                      <p className="text-sm text-muted-foreground">+2 {language === 'vi' ? 'buổi tập so với tuần trước' : 'sessions vs last week'}</p>
-                    </div>
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <Calendar className="h-6 w-6 text-primary" />
-                    </div>
-                  </div>
-                </Card>
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-6 text-primary border-b-2 border-primary pb-2 inline-block">
+          Dashboard
+        </h1>
+        
+        {/* Main Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Personal Information Card */}
+          <Card className="p-6 bg-orange-50 border-orange-200">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mr-4">
+                <User className="h-6 w-6 text-white" />
               </div>
-
-              {/* Today's Workout and Menu */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Today's Workout */}
-                <Card className="p-6">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center">
-                    <Calendar className="h-5 w-5 mr-2 text-primary" />
-                    {t.todaySchedule}
-                  </h3>
-                  <div className="bg-muted/50 rounded-lg p-4 mb-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-medium">{todayWorkout.name}</h4>
-                      <Badge variant={todayWorkout.completed ? "default" : "outline"}>
-                        {todayWorkout.completed ? t.completed : language === 'vi' ? 'Sắp diễn ra' : 'Upcoming'}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{todayWorkout.duration} {language === 'vi' ? 'phút' : 'minutes'}, {todayWorkout.time}</p>
-                  </div>
-                  <Button variant="fitness" className="w-full">
-                    {t.startWorkout}
-                  </Button>
-                </Card>
-
-                {/* Today's Nutrition */}
-                <Card className="p-6">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center">
-                    <Apple className="h-5 w-5 mr-2 text-primary" />
-                    {t.todayMenu}
-                  </h3>
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span>{t.totalCalories}: {totalCalories} kcal</span>
-                      <span>{t.targetCalories}: 1,800 kcal</span>
-                    </div>
-                    <Progress value={(totalCalories / 1800) * 100} />
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">{t.protein}</p>
-                      <p className="font-medium text-primary">{macros.protein}g</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">{t.carbs}</p>
-                      <p className="font-medium text-primary">{macros.carbs}g</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">{t.fat}</p>
-                      <p className="font-medium text-primary">{macros.fat}g</p>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {actionButtons.map((button, index) => (
-                  <Button
-                    key={index}
-                    variant={button.variant}
-                    onClick={button.onClick}
-                    className="h-auto p-4 flex flex-col items-center space-y-2"
-                  >
-                    {button.icon}
-                    <span className="text-sm text-center">{button.label}</span>
-                  </Button>
-                ))}
+              <div>
+                <h3 className="font-semibold text-primary">
+                  {language === 'vi' ? 'Thông tin cá nhân' : 'Personal Information'}
+                </h3>
+                <p className="text-sm text-gray-600">{user.name}, {user.age} {language === 'vi' ? 'tuổi' : 'years old'}</p>
               </div>
             </div>
-          )}
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between">
+                <span className="text-sm">{language === 'vi' ? 'Cân nặng:' : 'Weight:'}</span>
+                <span className="font-medium">{user.weight} kg (-5 kg)</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">{language === 'vi' ? 'Tỷ lệ mỡ:' : 'Body Fat:'}</span>
+                <span className="font-medium">{user.bodyFat}% (-4%)</span>
+              </div>
+            </div>
+            <button 
+              onClick={() => setSelectedSection('profile')}
+              className="text-primary text-sm hover:underline flex items-center"
+            >
+              {language === 'vi' ? 'Chi tiết' : 'Details'} <ChartBar className="h-4 w-4 ml-1" />
+            </button>
+          </Card>
 
-          {/* Add other sections here when selected */}
-          {selectedSection === 'schedule' && (
-            <ScheduleView language={language} />
-          )}
-          
-          {selectedSection === 'nutrition' && (
-            <NutritionView language={language} />
-          )}
-          
-          {selectedSection === 'progress' && (
-            <ProgressView language={language} />
-          )}
-          
-          {!['dashboard', 'schedule', 'nutrition', 'progress'].includes(selectedSection) && (
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-bold mb-4">
-                {navigation.find(n => n.id === selectedSection)?.label}
-              </h2>
-              <p className="text-muted-foreground">
-                {language === 'vi' ? 'Tính năng đang được phát triển...' : 'Feature coming soon...'}
+          {/* Today's Schedule Card */}
+          <Card className="p-6 bg-green-50 border-green-200">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mr-4">
+                <Calendar className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-primary">
+                  {language === 'vi' ? 'Lịch tập hôm nay' : 'Today\'s Schedule'}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {language === 'vi' ? 'Thứ 5, 20/04/2023' : 'Thu, 20/04/2023'}
+                </p>
+              </div>
+            </div>
+            <div className="bg-gray-100 rounded-lg p-3 mb-4">
+              <h4 className="font-medium mb-1">{todayWorkout.name}</h4>
+              <p className="text-sm text-gray-600">{todayWorkout.duration} {language === 'vi' ? 'phút' : 'minutes'}, {todayWorkout.time}</p>
+            </div>
+            <button 
+              onClick={() => setSelectedSection('schedule')}
+              className="text-primary text-sm hover:underline flex items-center"
+            >
+              {language === 'vi' ? 'Xem lịch tập' : 'View Schedule'} <Calendar className="h-4 w-4 ml-1" />
+            </button>
+          </Card>
+
+          {/* Today's Menu Card */}
+          <Card className="p-6 bg-blue-50 border-blue-200">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mr-4">
+                <Utensils className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-primary">
+                  {language === 'vi' ? 'Thực đơn hôm nay' : 'Today\'s Menu'}
+                </h3>
+                <p className="text-sm text-gray-600">1,600 / 1,800 kcal</p>
+              </div>
+            </div>
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between">
+                <span className="text-sm">Protein:</span>
+                <span className="font-medium">140g</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">Carbs:</span>
+                <span className="font-medium">180g</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">{language === 'vi' ? 'Chất béo:' : 'Fat:'}</span>
+                <span className="font-medium">45g</span>
+              </div>
+            </div>
+            <button 
+              onClick={() => setSelectedSection('nutrition')}
+              className="text-primary text-sm hover:underline flex items-center"
+            >
+              {language === 'vi' ? 'Xem thực đơn' : 'View Menu'} <Utensils className="h-4 w-4 ml-1" />
+            </button>
+          </Card>
+
+          {/* Progress Card */}
+          <Card className="p-6 bg-purple-50 border-purple-200">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mr-4">
+                <TrendingUp className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-primary">
+                  {language === 'vi' ? 'Tiến trình' : 'Progress'}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {language === 'vi' ? 'Tháng 4/2023' : 'April 2023'}
+                </p>
+              </div>
+            </div>
+            <div className="mb-4">
+              <div className="flex justify-between mb-2">
+                <span className="text-sm">{language === 'vi' ? 'Mục tiêu tháng:' : 'Monthly Goal:'}</span>
+                <span className="font-medium">75%</span>
+              </div>
+              <Progress value={75} className="mb-2" />
+              <p className="text-xs text-gray-600">
+                +2 {language === 'vi' ? 'buổi tập so với tuần trước' : 'sessions vs last week'}
               </p>
             </div>
-          )}
-        </main>
+            <button 
+              onClick={() => setSelectedSection('progress')}
+              className="text-primary text-sm hover:underline flex items-center"
+            >
+              {language === 'vi' ? 'Xem tiến trình' : 'View Progress'} <TrendingUp className="h-4 w-4 ml-1" />
+            </button>
+          </Card>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Button 
+            className="h-16 bg-primary text-white flex items-center justify-center space-x-2"
+            onClick={() => window.open('https://meet.google.com/new', '_blank')}
+          >
+            <Video className="h-5 w-5" />
+            <span>{language === 'vi' ? 'Tham gia buổi tập' : 'Join Session'}</span>
+          </Button>
+          
+          <Button 
+            variant="outline"
+            className="h-16 flex items-center justify-center space-x-2"
+          >
+            <MessageCircle className="h-5 w-5" />
+            <span>{language === 'vi' ? 'Chat với HLV' : 'Chat with Trainer'}</span>
+          </Button>
+          
+          <Button 
+            variant="outline"
+            className="h-16 flex items-center justify-center space-x-2"
+            onClick={() => setSelectedSection('progress')}
+          >
+            <Camera className="h-5 w-5" />
+            <span>{language === 'vi' ? 'Cập nhật ảnh tiến trình' : 'Update Progress Photos'}</span>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="h-16 flex items-center justify-center space-x-2"
+          >
+            <Play className="h-5 w-5" />
+            <span>{language === 'vi' ? 'Xem video hướng dẫn' : 'Watch Tutorial Videos'}</span>
+          </Button>
+        </div>
+
+        {/* Tab Content */}
+        {selectedSection === 'schedule' && (
+          <div className="mt-8">
+            <ScheduleView language={language} />
+          </div>
+        )}
+        
+        {selectedSection === 'nutrition' && (
+          <div className="mt-8">
+            <NutritionView language={language} />
+          </div>
+        )}
+        
+        {selectedSection === 'progress' && (
+          <div className="mt-8">
+            <ProgressView language={language} />
+          </div>
+        )}
       </div>
     </div>
   );
