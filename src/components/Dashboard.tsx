@@ -16,6 +16,7 @@ import {
 import { ScheduleView } from "./schedule/ScheduleView";
 import { NutritionView } from "./nutrition/NutritionView";
 import { ProgressView } from "./progress/ProgressView";
+import { UserProfile } from "./UserProfile";
 import { 
   Calendar, 
   MessageCircle, 
@@ -392,6 +393,12 @@ export function Dashboard({ language, onLanguageChange }: DashboardProps) {
           {selectedSection === 'progress' && (
             <div>
               <ProgressView language={language} />
+            </div>
+          )}
+          
+          {selectedSection === 'profile' && (
+            <div>
+              <UserProfile language={language} />
             </div>
           )}
         </main>
