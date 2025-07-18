@@ -3,12 +3,13 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Apple, Plus, Edit, Clock } from 'lucide-react';
+import { Apple, Plus, Edit, Clock, Settings } from 'lucide-react';
 import { useAPI } from '@/hooks/useAPI';
 import { nutritionAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { type Language } from '@/components/LanguageToggle';
 import { translations } from '@/translations';
+import { MealCustomizationModal } from './MealCustomizationModal';
 
 interface NutritionViewProps {
   language: Language;
@@ -17,6 +18,7 @@ interface NutritionViewProps {
 export function NutritionView({ language }: NutritionViewProps) {
   const { toast } = useToast();
   const t = translations[language];
+  const [showMealCustomModal, setShowMealCustomModal] = useState(false);
   
   const { data: menus, loading: menusLoading, refetch: refetchMenus } = useAPI(nutritionAPI.getMenus);
   const { data: meals, loading: mealsLoading, refetch: refetchMeals } = useAPI(nutritionAPI.getMeals);
@@ -148,10 +150,19 @@ export function NutritionView({ language }: NutritionViewProps) {
 
       {/* Today's Overview */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4 flex items-center">
-          <Apple className="h-5 w-5 mr-2 text-primary" />
-          {language === 'vi' ? 'Hôm nay' : 'Today\'s Overview'}
-        </h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold flex items-center">
+            <Apple className="h-5 w-5 mr-2 text-primary" />
+            {language === 'vi' ? 'Thực Đơn Hôm Nay' : 'Today\'s Meal Plan'}
+          </h3>
+          <Button 
+            onClick={() => setShowMealCustomModal(true)}
+            className="bg-primary hover:bg-primary/90 text-white"
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            {language === 'vi' ? 'Tuỳ chỉnh thực đơn' : 'Customize Meal Plan'}
+          </Button>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -229,6 +240,13 @@ export function NutritionView({ language }: NutritionViewProps) {
           </div>
         </div>
       )}
+
+      {/* Meal Customization Modal */}
+      <MealCustomizationModal 
+        open={showMealCustomModal}
+        onOpenChange={setShowMealCustomModal}
+        language={language}
+      />
     </div>
   );
 }
