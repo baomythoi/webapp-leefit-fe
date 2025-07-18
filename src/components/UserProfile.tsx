@@ -204,24 +204,16 @@ export function UserProfile({ language }: UserProfileProps) {
             <div className="w-full space-y-4">
               <div className="text-center">
                 <p className="text-sm text-muted-foreground mb-2">Cân nặng hiện tại</p>
-                <div className="flex items-center justify-center space-x-3">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleWeightChange(false)}
-                    className="w-8 h-8 rounded-full p-0"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </Button>
-                  <span className="text-2xl font-bold text-primary">{currentWeight}</span>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleWeightChange(true)}
-                    className="w-8 h-8 rounded-full p-0"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
+                <div className="flex items-center justify-center space-x-2">
+                  <Input
+                    type="number"
+                    value={currentWeight}
+                    onChange={(e) => setCurrentWeight(Number(e.target.value) || 0)}
+                    className="w-20 text-center text-lg font-bold"
+                    min="1"
+                    max="300"
+                  />
+                  <span className="text-lg font-medium text-muted-foreground">kg</span>
                 </div>
                 <Button 
                   onClick={handleWeightUpdate}
