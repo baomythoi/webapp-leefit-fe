@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://api-leefit-be.vietnamaisolution.com/api';
 
 // Generic API handler with error handling and loading states
 async function apiRequest<T>(
@@ -37,10 +37,15 @@ export const accountAPI = {
     method: 'POST',
     body: JSON.stringify(userData),
   }),
-  getUserProfile: () => apiRequest('/users'),
-  updateUserProfile: (id: string, userData: any) => apiRequest(`/users/${id}`, {
-    method: 'PUT',
+  getUserProfile: (email: string) => apiRequest(`/users/${email}`),
+  updateUserProfile: (userData: any) => apiRequest('/users', {
+    method: 'POST',
     body: JSON.stringify(userData),
+  }),
+  uploadAvatar: (id: string, formData: FormData) => apiRequest(`/users/${id}/avatar`, {
+    method: 'POST',
+    body: formData,
+    headers: {}, // Remove Content-Type to let browser set it for FormData
   }),
 };
 
@@ -56,6 +61,7 @@ export const packagesAPI = {
     method: 'POST',
     body: JSON.stringify(lessonData),
   }),
+  getExerciseVideos: () => apiRequest('/exercise-videos'),
 };
 
 // Trainers API
@@ -70,6 +76,8 @@ export const trainersAPI = {
 
 // Training Schedule & Sessions API
 export const sessionsAPI = {
+  getUserSchedule: (userId: string) => apiRequest(`/users/${userId}/schedule`),
+  getTrainerSchedule: (trainerId: string) => apiRequest(`/trainers/${trainerId}/schedule`),
   getTrainingSessions: () => apiRequest('/training_sessions'),
   createSession: (sessionData: any) => apiRequest('/training_sessions', {
     method: 'POST',
@@ -86,6 +94,7 @@ export const sessionsAPI = {
 
 // Payments API
 export const paymentsAPI = {
+  getUserPayments: (userId: string) => apiRequest(`/users/${userId}/payments`),
   getPaymentHistory: () => apiRequest('/payments'),
   recordPayment: (paymentData: any) => apiRequest('/payments', {
     method: 'POST',
@@ -95,6 +104,8 @@ export const paymentsAPI = {
 
 // Meals, Menus, Menu-Meal Mapping API
 export const nutritionAPI = {
+  getFoodElements: () => apiRequest('/food-elements'),
+  getUserMeals: (userId: string) => apiRequest(`/users/${userId}/meals`),
   getMeals: () => apiRequest('/meals'),
   createMeal: (mealData: any) => apiRequest('/meals', {
     method: 'POST',
@@ -113,7 +124,7 @@ export const nutritionAPI = {
 
 // User Progress API
 export const progressAPI = {
-  getUserProgress: () => apiRequest('/user_progress'),
+  getUserProgress: (userId: string) => apiRequest(`/users/${userId}/progress`),
   uploadProgress: (progressData: any) => apiRequest('/user_progress', {
     method: 'POST',
     body: JSON.stringify(progressData),

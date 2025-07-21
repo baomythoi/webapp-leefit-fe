@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,14 +9,34 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Minus, Upload, Check } from 'lucide-react';
+import { accountAPI } from '@/services/api';
+import { useAPI } from '@/hooks/useAPI';
 type Language = 'vi' | 'en';
 
 interface UserProfileProps {
   language: Language;
 }
 
+interface UserData {
+  full_name: string;
+  age: number;
+  height_cm: number;
+  weight_kg: number;
+  timezone: string;
+  avatar_url: string;
+  milestones: { id: string; month: string; goal: string; }[];
+  package: {
+    name: string;
+    start_date: string;
+    end_date: string;
+    progress: number;
+    status: string;
+    benefits: string[];
+  };
+}
+
 // Fallback data when API is not available
-const fallbackUserData = {
+const fallbackUserData: UserData = {
   full_name: "Nguyễn Văn A",
   age: 28,
   height_cm: 175,
@@ -62,22 +82,35 @@ export function UserProfile({ language }: UserProfileProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Fetch user data from API
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const { data, error } = await accountAPI.getUserProfile('user@example.com');
+        if (data && !error) {
+          const userData = data as UserData;
+          setUserData(userData);
+          setCurrentWeight(userData.weight_kg);
+          setSelectedTimezone(userData.timezone);
+        }
+      } catch (error) {
+        console.log('Using fallback data - API not available');
+      }
+    };
+    fetchUserData();
+  }, []);
+
   const handleWeightChange = (increment: boolean) => {
     setCurrentWeight(prev => increment ? prev + 1 : Math.max(1, prev - 1));
   };
 
   const handleWeightUpdate = async () => {
     try {
-      const response = await fetch('http://localhost:5678/webhook-weight-update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: "123",
-          new_weight: currentWeight
-        })
+      const { data, error } = await accountAPI.updateUserProfile({
+        weight_kg: currentWeight
       });
 
-      if (response.ok) {
+      if (data && !error) {
         setUserData(prev => ({ ...prev, weight_kg: currentWeight }));
         toast({ title: "Cập nhật cân nặng thành công" });
       } else {
@@ -90,16 +123,14 @@ export function UserProfile({ language }: UserProfileProps) {
 
   const handleTimezoneUpdate = async (timezone: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/users/123`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ timezone })
-      });
+      const { data, error } = await accountAPI.updateUserProfile({ timezone });
 
-      if (response.ok) {
+      if (data && !error) {
         setSelectedTimezone(timezone);
         setUserData(prev => ({ ...prev, timezone }));
         toast({ title: "Cập nhật múi giờ thành công" });
+      } else {
+        toast({ title: "Cập nhật múi giờ thất bại", variant: "destructive" });
       }
     } catch (error) {
       toast({ title: "Cập nhật múi giờ thất bại", variant: "destructive" });
@@ -121,18 +152,17 @@ export function UserProfile({ language }: UserProfileProps) {
     formData.append('avatar', selectedFile);
 
     try {
-      const response = await fetch('http://localhost:5000/api/users/123/avatar', {
-        method: 'POST',
-        body: formData
-      });
+      const { data, error } = await accountAPI.uploadAvatar('123', formData);
 
-      if (response.ok) {
-        const result = await response.json();
+      if (data && !error) {
+        const result = data as { avatar_url: string };
         setUserData(prev => ({ ...prev, avatar_url: result.avatar_url }));
         setAvatarDialogOpen(false);
         setSelectedFile(null);
         setPreviewUrl(null);
         toast({ title: "Cập nhật ảnh đại diện thành công" });
+      } else {
+        toast({ title: "Cập nhật ảnh đại diện thất bại", variant: "destructive" });
       }
     } catch (error) {
       toast({ title: "Cập nhật ảnh đại diện thất bại", variant: "destructive" });

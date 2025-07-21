@@ -18,7 +18,9 @@ export function ProgressView({ language }: ProgressViewProps) {
   const { toast } = useToast();
   const t = translations[language];
   
-  const { data: progressData, loading, error, refetch } = useAPI(progressAPI.getUserProgress);
+  const { data: progressData, loading, error, refetch } = useAPI(() => 
+    progressAPI.getUserProgress('current-user-id') // Replace with actual user ID
+  );
 
   const handleUploadProgress = async () => {
     try {

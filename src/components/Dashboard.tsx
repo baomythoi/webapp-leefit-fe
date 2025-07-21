@@ -43,10 +43,14 @@ export function Dashboard({ language, onLanguageChange }: DashboardProps) {
   const t = translations[language];
 
   // API hooks for real-time data
-  const { data: userProfile, loading: profileLoading, error: profileError } = useAPI(accountAPI.getUserProfile);
+  const { data: userProfile, loading: profileLoading, error: profileError } = useAPI(() => 
+    accountAPI.getUserProfile('user@example.com') // Replace with actual user email
+  );
   const { data: trainingSessions, loading: sessionsLoading, refetch: refetchSessions } = useAPI(sessionsAPI.getTrainingSessions);
   const { data: todayMenus, loading: menusLoading } = useAPI(nutritionAPI.getMenus);
-  const { data: userProgress, loading: progressLoading } = useAPI(progressAPI.getUserProgress);
+  const { data: userProgress, loading: progressLoading } = useAPI(() => 
+    progressAPI.getUserProgress('current-user-id') // Replace with actual user ID
+  );
   const { data: notifications, loading: notificationsLoading } = useAPI(() => 
     notificationsAPI.getUserNotifications('current-user-id') // Replace with actual user ID
   );
