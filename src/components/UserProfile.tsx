@@ -2,15 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Minus, Upload, Check } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Plus, Minus, Upload, Check, Save, Edit3 } from 'lucide-react';
 import { accountAPI } from '@/services/api';
-import { useAPI } from '@/hooks/useAPI';
+import moment from 'moment-timezone';
+
 type Language = 'vi' | 'en';
 
 interface UserProfileProps {
@@ -23,6 +26,7 @@ interface UserData {
   height_cm: number;
   weight_kg: number;
   timezone: string;
+  phone?: string;
   avatar_url: string;
   milestones: { id: string; month: string; goal: string; }[];
   package: {
@@ -35,13 +39,23 @@ interface UserData {
   };
 }
 
+interface FormData {
+  full_name: string;
+  age: number;
+  height_cm: number;
+  weight_kg: number;
+  timezone: string;
+  phone: string;
+}
+
 // Fallback data when API is not available
 const fallbackUserData: UserData = {
   full_name: "Nguyễn Văn A",
   age: 28,
   height_cm: 175,
-  weight_kg: 75,
+  weight_kg: 68,
   timezone: "Asia/Ho_Chi_Minh",
+  phone: "+84 123 456 789",
   avatar_url: "/placeholder/avatar.jpg",
   milestones: [
     { id: "T1", month: "Tháng 1/2023", goal: "Giảm 2kg, tăng sức bền" },
@@ -64,77 +78,112 @@ const fallbackUserData: UserData = {
   }
 };
 
-const timezones = [
-  { value: "Asia/Ho_Chi_Minh", label: "(GMT+7) Hà Nội, Bangkok" },
-  { value: "America/New_York", label: "(GMT-5) New York" },
-  { value: "Europe/London", label: "(GMT+0) London" },
-  { value: "Asia/Tokyo", label: "(GMT+9) Tokyo" },
-  { value: "Australia/Sydney", label: "(GMT+10) Sydney" },
-  { value: "America/Los_Angeles", label: "(GMT-8) Los Angeles" },
-];
+// Get all world timezones
+const getTimezones = () => {
+  const zones = moment.tz.names();
+  return zones.map(zone => ({
+    value: zone,
+    label: `(GMT${moment.tz(zone).format('Z')}) ${zone.replace(/_/g, ' ')}`
+  }));
+};
 
 export function UserProfile({ language }: UserProfileProps) {
   const [userData, setUserData] = useState(fallbackUserData);
-  const [currentWeight, setCurrentWeight] = useState(userData.weight_kg);
-  const [selectedTimezone, setSelectedTimezone] = useState(userData.timezone);
+  const [formData, setFormData] = useState<FormData>({
+    full_name: fallbackUserData.full_name,
+    age: fallbackUserData.age,
+    height_cm: fallbackUserData.height_cm,
+    weight_kg: fallbackUserData.weight_kg,
+    timezone: fallbackUserData.timezone,
+    phone: fallbackUserData.phone || ''
+  });
+  const [isEditing, setIsEditing] = useState(false);
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user, email } = useAuth();
+  const timezones = getTimezones();
 
   // Fetch user data from API
   useEffect(() => {
     const fetchUserData = async () => {
+      if (!email) return;
+      
       try {
-        const { data, error } = await accountAPI.getUserProfile('user@example.com');
+        setLoading(true);
+        const { data, error } = await accountAPI.getUserProfile(email);
+        
         if (data && !error) {
-          const userData = data as UserData;
+          const apiUserData = data as Partial<UserData>;
+          const userData: UserData = {
+            ...fallbackUserData,
+            ...apiUserData,
+            milestones: apiUserData.milestones || fallbackUserData.milestones,
+            package: apiUserData.package || fallbackUserData.package
+          };
           setUserData(userData);
-          setCurrentWeight(userData.weight_kg);
-          setSelectedTimezone(userData.timezone);
+          setFormData({
+            full_name: userData.full_name,
+            age: userData.age,
+            height_cm: userData.height_cm,
+            weight_kg: userData.weight_kg,
+            timezone: userData.timezone,
+            phone: userData.phone || ''
+          });
         }
       } catch (error) {
         console.log('Using fallback data - API not available');
+      } finally {
+        setLoading(false);
       }
     };
+    
     fetchUserData();
-  }, []);
+  }, [email]);
 
-  const handleWeightChange = (increment: boolean) => {
-    setCurrentWeight(prev => increment ? prev + 1 : Math.max(1, prev - 1));
+  const handleInputChange = (field: keyof FormData, value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleWeightUpdate = async () => {
+  const handleSaveProfile = async () => {
     try {
-      const { data, error } = await accountAPI.updateUserProfile({
-        weight_kg: currentWeight
+      setLoading(true);
+      const { data, error } = await accountAPI.updateUserProfile(formData);
+
+      if (data && !error) {
+        setUserData(prev => ({ ...prev, ...formData }));
+        setIsEditing(false);
+        toast({ 
+          title: language === 'vi' ? "Cập nhật thông tin thành công" : "Profile updated successfully" 
+        });
+      } else {
+        toast({ 
+          title: language === 'vi' ? "Cập nhật thất bại" : "Update failed", 
+          variant: "destructive" 
+        });
+      }
+    } catch (error) {
+      toast({ 
+        title: language === 'vi' ? "Cập nhật thất bại" : "Update failed", 
+        variant: "destructive" 
       });
-
-      if (data && !error) {
-        setUserData(prev => ({ ...prev, weight_kg: currentWeight }));
-        toast({ title: "Cập nhật cân nặng thành công" });
-      } else {
-        toast({ title: "Cập nhật thất bại", variant: "destructive" });
-      }
-    } catch (error) {
-      toast({ title: "Cập nhật thất bại", variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleTimezoneUpdate = async (timezone: string) => {
-    try {
-      const { data, error } = await accountAPI.updateUserProfile({ timezone });
-
-      if (data && !error) {
-        setSelectedTimezone(timezone);
-        setUserData(prev => ({ ...prev, timezone }));
-        toast({ title: "Cập nhật múi giờ thành công" });
-      } else {
-        toast({ title: "Cập nhật múi giờ thất bại", variant: "destructive" });
-      }
-    } catch (error) {
-      toast({ title: "Cập nhật múi giờ thất bại", variant: "destructive" });
-    }
+  const handleCancelEdit = () => {
+    setFormData({
+      full_name: userData.full_name,
+      age: userData.age,
+      height_cm: userData.height_cm,
+      weight_kg: userData.weight_kg,
+      timezone: userData.timezone,
+      phone: userData.phone || ''
+    });
+    setIsEditing(false);
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,13 +195,13 @@ export function UserProfile({ language }: UserProfileProps) {
   };
 
   const handleAvatarUpload = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || !user) return;
 
     const formData = new FormData();
     formData.append('avatar', selectedFile);
 
     try {
-      const { data, error } = await accountAPI.uploadAvatar('123', formData);
+      const { data, error } = await accountAPI.uploadAvatar(user.id || '123', formData);
 
       if (data && !error) {
         const result = data as { avatar_url: string };
@@ -160,20 +209,85 @@ export function UserProfile({ language }: UserProfileProps) {
         setAvatarDialogOpen(false);
         setSelectedFile(null);
         setPreviewUrl(null);
-        toast({ title: "Cập nhật ảnh đại diện thành công" });
+        toast({ 
+          title: language === 'vi' ? "Cập nhật ảnh đại diện thành công" : "Avatar updated successfully" 
+        });
       } else {
-        toast({ title: "Cập nhật ảnh đại diện thất bại", variant: "destructive" });
+        toast({ 
+          title: language === 'vi' ? "Cập nhật ảnh đại diện thất bại" : "Avatar update failed", 
+          variant: "destructive" 
+        });
       }
     } catch (error) {
-      toast({ title: "Cập nhật ảnh đại diện thất bại", variant: "destructive" });
+      toast({ 
+        title: language === 'vi' ? "Cập nhật ảnh đại diện thất bại" : "Avatar update failed", 
+        variant: "destructive" 
+      });
     }
   };
 
+  const t = {
+    vi: {
+      personalInfo: "Thông Tin Cá Nhân",
+      fullName: "Họ tên",
+      age: "Tuổi",
+      height: "Chiều cao",
+      weight: "Cân nặng",
+      phone: "Số điện thoại",
+      timezone: "Múi giờ",
+      edit: "Chỉnh sửa",
+      save: "Lưu",
+      cancel: "Hủy",
+      uploadAvatar: "Cập nhật ảnh đại diện",
+      milestones: "Cột Mốc Tập Luyện",
+      package: "Gói Tập"
+    },
+    en: {
+      personalInfo: "Personal Information",
+      fullName: "Full Name",
+      age: "Age", 
+      height: "Height",
+      weight: "Weight",
+      phone: "Phone",
+      timezone: "Timezone",
+      edit: "Edit",
+      save: "Save",
+      cancel: "Cancel",
+      uploadAvatar: "Upload Avatar",
+      milestones: "Training Milestones",
+      package: "Training Package"
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Thông Tin Cá Nhân</h1>
-        <div className="w-12 h-1 bg-primary rounded-full"></div>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground mb-2">{t[language].personalInfo}</h1>
+          <div className="w-12 h-1 bg-primary rounded-full"></div>
+        </div>
+        <Button 
+          onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
+          disabled={loading}
+          variant={isEditing ? "default" : "outline"}
+          className="flex items-center space-x-2"
+        >
+          {isEditing ? <Save className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
+          <span>{isEditing ? t[language].save : t[language].edit}</span>
+        </Button>
+        {isEditing && (
+          <Button onClick={handleCancelEdit} variant="outline" className="ml-2">
+            {t[language].cancel}
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -196,7 +310,7 @@ export function UserProfile({ language }: UserProfileProps) {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Cập nhật ảnh đại diện</DialogTitle>
+                  <DialogTitle>{t[language].uploadAvatar}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="flex justify-center">
@@ -215,59 +329,124 @@ export function UserProfile({ language }: UserProfileProps) {
                   </div>
                   <div className="flex gap-2">
                     <Button onClick={handleAvatarUpload} disabled={!selectedFile} className="flex-1">
-                      Lưu ảnh
+                      {t[language].save}
                     </Button>
                     <Button variant="outline" onClick={() => setAvatarDialogOpen(false)} className="flex-1">
-                      Hủy
+                      {t[language].cancel}
                     </Button>
                   </div>
                 </div>
               </DialogContent>
             </Dialog>
 
-            <div className="text-center">
-              <h2 className="text-xl font-semibold text-foreground">{userData.full_name}</h2>
-              <p className="text-muted-foreground">{userData.age} tuổi</p>
-              <p className="text-muted-foreground">{userData.height_cm} cm</p>
-            </div>
-
+            {/* User Basic Info Form */}
             <div className="w-full space-y-4">
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-2">Cân nặng hiện tại</p>
-                <div className="flex items-center justify-center space-x-2">
-                  <Input
-                    type="number"
-                    value={currentWeight}
-                    onChange={(e) => setCurrentWeight(Number(e.target.value) || 0)}
-                    className="w-20 text-center text-lg font-bold"
-                    min="1"
-                    max="300"
-                  />
-                  <span className="text-lg font-medium text-muted-foreground">kg</span>
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <Label htmlFor="fullName">{t[language].fullName}</Label>
+                  {isEditing ? (
+                    <Input
+                      id="fullName"
+                      value={formData.full_name}
+                      onChange={(e) => handleInputChange('full_name', e.target.value)}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="text-lg font-semibold text-foreground mt-1">{userData.full_name}</p>
+                  )}
                 </div>
-                <Button 
-                  onClick={handleWeightUpdate}
-                  className="mt-3 w-full"
-                  size="sm"
-                >
-                  Cập nhật
-                </Button>
-              </div>
 
-              <div>
-                <label className="text-sm text-muted-foreground block mb-2">Múi giờ</label>
-                <Select value={selectedTimezone} onValueChange={handleTimezoneUpdate}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timezones.map(tz => (
-                      <SelectItem key={tz.value} value={tz.value}>
-                        {tz.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="age">{t[language].age}</Label>
+                    {isEditing ? (
+                      <Input
+                        id="age"
+                        type="number"
+                        value={formData.age}
+                        onChange={(e) => handleInputChange('age', Number(e.target.value) || 0)}
+                        className="mt-1"
+                        min="1"
+                        max="120"
+                      />
+                    ) : (
+                      <p className="text-muted-foreground mt-1">{userData.age} {language === 'vi' ? 'tuổi' : 'years old'}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="height">{t[language].height}</Label>
+                    {isEditing ? (
+                      <Input
+                        id="height"
+                        type="number"
+                        value={formData.height_cm}
+                        onChange={(e) => handleInputChange('height_cm', Number(e.target.value) || 0)}
+                        className="mt-1"
+                        min="1"
+                        max="300"
+                      />
+                    ) : (
+                      <p className="text-muted-foreground mt-1">{userData.height_cm} cm</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="weight">{t[language].weight}</Label>
+                  {isEditing ? (
+                    <Input
+                      id="weight"
+                      type="number"
+                      value={formData.weight_kg}
+                      onChange={(e) => handleInputChange('weight_kg', Number(e.target.value) || 0)}
+                      className="mt-1"
+                      min="1"
+                      max="500"
+                    />
+                  ) : (
+                    <p className="text-lg font-bold text-foreground mt-1">{userData.weight_kg} kg</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="phone">{t[language].phone}</Label>
+                  {isEditing ? (
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="text-muted-foreground mt-1">{userData.phone || 'Chưa cập nhật'}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="timezone">{t[language].timezone}</Label>
+                  {isEditing ? (
+                    <Select 
+                      value={formData.timezone} 
+                      onValueChange={(value) => handleInputChange('timezone', value)}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {timezones.slice(0, 20).map(tz => (
+                          <SelectItem key={tz.value} value={tz.value}>
+                            {tz.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-muted-foreground mt-1">
+                      {timezones.find(tz => tz.value === userData.timezone)?.label || userData.timezone}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -275,7 +454,7 @@ export function UserProfile({ language }: UserProfileProps) {
 
         {/* Training Milestones */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Cột Mốc Tập Luyện</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">{t[language].milestones}</h3>
           <div className="space-y-4">
             {userData.milestones.map((milestone) => (
               <div key={milestone.id} className="flex items-start space-x-3">
@@ -293,7 +472,7 @@ export function UserProfile({ language }: UserProfileProps) {
 
         {/* Training Package */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Gói Tập</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">{t[language].package}</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-medium text-foreground">{userData.package.name}</h4>
