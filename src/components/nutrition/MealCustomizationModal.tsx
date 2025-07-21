@@ -27,10 +27,35 @@ interface DailyMeal {
   dinner: MealItem[];
 }
 
+interface FoodElement {
+  id: string;
+  name: string;
+  calories_per_100g: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  category: string;
+}
+
+interface UserMeal {
+  id: string;
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  food_name: string;
+  calories: number;
+  protein_g?: number;
+  carbs_g?: number;
+  fat_g?: number;
+  time: string;
+  portion_size?: number;
+}
+
 interface MealCustomizationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   language: Language;
+  foodElements: FoodElement[];
+  userMeals: UserMeal[];
+  onMealsUpdate: (meals: UserMeal[]) => void;
 }
 
 // Example fallback data
@@ -48,33 +73,70 @@ const FALLBACK_MEALS: MealItem[] = [
   { id: '11', name: 'Rau bông cải xanh', calories: 55, protein: 4, carbs: 11, fat: 0, icon: '🥦' },
 ];
 
-export function MealCustomizationModal({ open, onOpenChange, language }: MealCustomizationModalProps) {
+export function MealCustomizationModal({ 
+  open, 
+  onOpenChange, 
+  language, 
+  foodElements, 
+  userMeals, 
+  onMealsUpdate 
+}: MealCustomizationModalProps) {
   const { toast } = useToast();
-  const [meals, setMeals] = useState<MealItem[]>([]);
+  const [meals, setMeals] = useState<MealItem[]>(FALLBACK_MEALS);
   const [dailyMeal, setDailyMeal] = useState<DailyMeal>({
-    breakfast: [
-      { id: '2', name: 'Yến mạch + sữa', calories: 300, protein: 12, carbs: 54, fat: 6, icon: '🥣' },
-      { id: '6', name: '2 quả trứng luộc', calories: 140, protein: 12, carbs: 1, fat: 10, icon: '🥚' },
-      { id: '7', name: '1 quả táo', calories: 80, protein: 0, carbs: 21, fat: 0, icon: '🍎' },
-    ],
-    lunch: [
-      { id: '1', name: 'Ức gà nướng', calories: 200, protein: 30, carbs: 0, fat: 5, icon: '🍗' },
-      { id: '4', name: 'Cơm gạo lứt', calories: 150, protein: 3, carbs: 30, fat: 1, icon: '🍚' },
-      { id: '9', name: 'Salad rau củ', calories: 70, protein: 2, carbs: 15, fat: 0, icon: '🥗' },
-    ],
-    snack: [
-      { id: '3', name: 'Protein shake', calories: 150, protein: 25, carbs: 5, fat: 2, icon: '🥤' },
-      { id: '8', name: '1 quả chuối', calories: 105, protein: 1, carbs: 27, fat: 0, icon: '🍌' },
-    ],
-    dinner: [
-      { id: '5', name: 'Cá hồi nướng', calories: 220, protein: 28, carbs: 0, fat: 12, icon: '🐟' },
-      { id: '10', name: 'Khoai lang nướng', calories: 130, protein: 2, carbs: 30, fat: 0, icon: '🍠' },
-      { id: '11', name: 'Rau bông cải xanh', calories: 55, protein: 4, carbs: 11, fat: 0, icon: '🥦' },
-    ],
+    breakfast: [],
+    lunch: [],
+    snack: [],
+    dinner: []
   });
   
   const [calorieTarget, setCalorieTarget] = useState<string>('1800');
   const [showFallbackMessage, setShowFallbackMessage] = useState(false);
+
+  useEffect(() => {
+    if (open && foodElements.length > 0) {
+      // Convert foodElements to MealItem format
+      const convertedMeals = foodElements.map(food => ({
+        id: food.id,
+        name: food.name,
+        calories: food.calories_per_100g,
+        protein: food.protein_g,
+        carbs: food.carbs_g,
+        fat: food.fat_g,
+        icon: '🍽️'
+      }));
+      setMeals(convertedMeals);
+      setShowFallbackMessage(false);
+    } else if (open) {
+      setMeals(FALLBACK_MEALS);
+      setShowFallbackMessage(true);
+    }
+
+    // Initialize daily meals from userMeals
+    if (open && userMeals.length > 0) {
+      const grouped = userMeals.reduce((acc, meal) => {
+        const mealItems = acc[meal.meal_type] || [];
+        mealItems.push({
+          id: meal.id,
+          name: meal.food_name,
+          calories: meal.calories,
+          protein: meal.protein_g,
+          carbs: meal.carbs_g,
+          fat: meal.fat_g,
+          icon: '🍽️'
+        });
+        acc[meal.meal_type] = mealItems;
+        return acc;
+      }, {} as any);
+      
+      setDailyMeal({
+        breakfast: grouped.breakfast || [],
+        lunch: grouped.lunch || [],
+        snack: grouped.snack || [],
+        dinner: grouped.dinner || []
+      });
+    }
+  }, [open, foodElements, userMeals]);
 
   const mealTimes = {
     breakfast: '7:00 AM',
@@ -90,39 +152,6 @@ export function MealCustomizationModal({ open, onOpenChange, language }: MealCus
     dinner: language === 'vi' ? 'Bữa tối' : 'Dinner'
   };
 
-  useEffect(() => {
-    if (open) {
-      fetchMeals();
-    }
-  }, [open]);
-
-  const fetchMeals = async () => {
-    try {
-      const { data, error } = await nutritionAPI.getMeals();
-      if (error) throw new Error(error);
-      
-      if (!data || !Array.isArray(data) || data.length === 0) {
-        setMeals(FALLBACK_MEALS);
-        setShowFallbackMessage(true);
-      } else {
-        // Transform API data to match our interface
-        const transformedMeals = data.map((meal: any, index: number) => ({
-          id: meal.id || `meal-${index}`,
-          name: meal.name || 'Unknown meal',
-          calories: meal.calories || 0,
-          protein: meal.protein || 0,
-          carbs: meal.carbs || 0,
-          fat: meal.fat || 0,
-          icon: '🍽️'
-        }));
-        setMeals(transformedMeals);
-        setShowFallbackMessage(false);
-      }
-    } catch (error) {
-      setMeals(FALLBACK_MEALS);
-      setShowFallbackMessage(true);
-    }
-  };
 
   const calculateTotals = () => {
     const allMeals = [...dailyMeal.breakfast, ...dailyMeal.lunch, ...dailyMeal.snack, ...dailyMeal.dinner];
@@ -208,15 +237,34 @@ export function MealCustomizationModal({ open, onOpenChange, language }: MealCus
   const saveMealPlan = async () => {
     try {
       const totals = calculateTotals();
-      const newMenu = {
-        name: language === 'vi' ? `Thực đơn ${new Date().toLocaleDateString('vi-VN')}` : `Meal Plan ${new Date().toLocaleDateString()}`,
-        description: language === 'vi' ? 'Thực đơn được tùy chỉnh' : 'Customized meal plan',
-        total_calories: totals.calories,
-        date: new Date().toISOString()
-      };
       
-      const { error } = await nutritionAPI.createMenu(newMenu);
-      if (error) throw new Error(error);
+      // Convert dailyMeal back to UserMeal format
+      const newUserMeals: UserMeal[] = [];
+      const mealTimes = {
+        breakfast: '7:00 AM',
+        lunch: '12:00 PM',
+        snack: '4:00 PM',
+        dinner: '7:00 PM'
+      };
+
+      Object.entries(dailyMeal).forEach(([mealType, items]) => {
+        items.forEach((item, index) => {
+          newUserMeals.push({
+            id: `${mealType}-${index}-${Date.now()}`,
+            meal_type: mealType as any,
+            food_name: item.name,
+            calories: item.calories,
+            protein_g: item.protein,
+            carbs_g: item.carbs,
+            fat_g: item.fat,
+            time: mealTimes[mealType as keyof typeof mealTimes],
+            portion_size: 100
+          });
+        });
+      });
+
+      // Update parent component
+      onMealsUpdate(newUserMeals);
       
       toast({
         title: language === 'vi' ? 'Thành công!' : 'Success!',
