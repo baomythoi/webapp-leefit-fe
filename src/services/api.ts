@@ -38,6 +38,7 @@ export const accountAPI = {
     body: JSON.stringify(userData),
   }),
   getUserProfile: (email: string) => apiRequest(`/users/${email}`),
+  getUserMe: () => apiRequest('/users/me'), // New endpoint for current user
   updateUserProfile: (userData: any) => apiRequest('/users', {
     method: 'POST',
     body: JSON.stringify(userData),

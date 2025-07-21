@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { LanguageToggle, type Language } from "@/components/LanguageToggle";
 import { translations } from "@/translations";
+import { useAuth } from "@/contexts/AuthContext";
 import { useAPI } from "@/hooks/useAPI";
 import { 
   sessionsAPI, 
@@ -40,11 +42,13 @@ interface DashboardProps {
 
 export function Dashboard({ language, onLanguageChange }: DashboardProps) {
   const [selectedSection, setSelectedSection] = useState('dashboard');
+  const { user, logout, email } = useAuth();
+  const navigate = useNavigate();
   const t = translations[language];
 
-  // API hooks for real-time data
+  // API hooks for real-time data - fetch current user
   const { data: userProfile, loading: profileLoading, error: profileError } = useAPI(() => 
-    accountAPI.getUserProfile('user@example.com') // Replace with actual user email
+    accountAPI.getUserMe()
   );
   const { data: trainingSessions, loading: sessionsLoading, refetch: refetchSessions } = useAPI(sessionsAPI.getTrainingSessions);
   const { data: todayMenus, loading: menusLoading } = useAPI(nutritionAPI.getMenus);
@@ -55,7 +59,7 @@ export function Dashboard({ language, onLanguageChange }: DashboardProps) {
     notificationsAPI.getUserNotifications('current-user-id') // Replace with actual user ID
   );
 
-  const user = {
+  const currentUser = user || {
     name: language === 'vi' ? "Nguyễn Văn A" : "John Doe",
     age: 28,
     weight: 75,
@@ -65,6 +69,11 @@ export function Dashboard({ language, onLanguageChange }: DashboardProps) {
     todaySteps: 6500,
     targetSteps: 10000,
     monthlyGoal: 75
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   const todayWorkout = {
@@ -174,10 +183,20 @@ export function Dashboard({ language, onLanguageChange }: DashboardProps) {
             <Bell className="h-6 w-6" />
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-medium">A</span>
+                <span className="text-white text-sm font-medium">
+                  {(user?.full_name || currentUser.name).charAt(0).toUpperCase()}
+                </span>
               </div>
-              <span className="font-medium">{user.name}</span>
+              <span className="font-medium">{user?.full_name || currentUser.name}</span>
             </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleLogout}
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              {language === 'vi' ? 'Đăng xuất' : 'Logout'}
+            </Button>
           </div>
         </div>
       </header>
@@ -226,17 +245,19 @@ export function Dashboard({ language, onLanguageChange }: DashboardProps) {
                       <h3 className="font-semibold text-primary">
                         {language === 'vi' ? 'Thông tin cá nhân' : 'Personal Information'}
                       </h3>
-                      <p className="text-sm text-gray-600">{user.name}, {user.age} {language === 'vi' ? 'tuổi' : 'years old'}</p>
+                      <p className="text-sm text-gray-600">
+                        {user?.full_name || currentUser.name}, {user?.age || currentUser.age} {language === 'vi' ? 'tuổi' : 'years old'}
+                      </p>
                     </div>
                   </div>
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between">
                       <span className="text-sm">{language === 'vi' ? 'Cân nặng:' : 'Weight:'}</span>
-                      <span className="font-medium">{user.weight} kg (-5 kg)</span>
+                      <span className="font-medium">{user?.weight_kg || currentUser.weight} kg (-5 kg)</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm">{language === 'vi' ? 'Tỷ lệ mỡ:' : 'Body Fat:'}</span>
-                      <span className="font-medium">{user.bodyFat}% (-4%)</span>
+                      <span className="font-medium">{currentUser.bodyFat}% (-4%)</span>
                     </div>
                   </div>
                   <button 

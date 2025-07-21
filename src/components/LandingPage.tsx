@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LanguageToggle, type Language } from "@/components/LanguageToggle";
 import { translations } from "@/translations";
-import { Dumbbell, Users, Target, Trophy, Star, ArrowRight } from "lucide-react";
+import { Dumbbell, Users, Target, Trophy, Star, ArrowRight, LogIn } from "lucide-react";
 
 interface LandingPageProps {
   language: Language;
@@ -13,6 +14,7 @@ interface LandingPageProps {
 
 export function LandingPage({ language, onLanguageChange, onStartSurvey }: LandingPageProps) {
   const t = translations[language];
+  const navigate = useNavigate();
 
   const features = [
     {
@@ -71,6 +73,15 @@ export function LandingPage({ language, onLanguageChange, onStartSurvey }: Landi
             <span className="text-sm font-medium text-muted-foreground">
               {t.gymCoachingOnline}
             </span>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/login')}
+              className="flex items-center space-x-2"
+            >
+              <LogIn className="h-4 w-4" />
+              <span>{language === 'vi' ? 'Đăng nhập' : 'Login'}</span>
+            </Button>
             <LanguageToggle 
               currentLanguage={language} 
               onLanguageChange={onLanguageChange} 
